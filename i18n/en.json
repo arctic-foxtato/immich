@@ -750,6 +750,7 @@
   "filename": "Filename",
   "filetype": "Filetype",
   "filter_people": "Filter people",
+  "filter_tags": "Filter tags",
   "find_them_fast": "Find them fast by name with search",
   "fix_incorrect_match": "Fix incorrect match",
   "folders": "Folders",
