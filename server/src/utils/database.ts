@@ -92,6 +92,7 @@ export function searchAssetBuilder(
     withPeople,
     personIds,
     withStacked,
+    tagIds,
     trashedAfter,
     trashedBefore,
   } = options;
@@ -133,6 +134,16 @@ export function searchAssetBuilder(
     builder.addCommonTableExpression(cte, 'face_ids').innerJoin('face_ids', 'a', 'a."assetId" = asset.id');
 
     builder.getQuery(); // typeorm mixes up parameters without this  (੭ °ཀ°)੭
+  }
+
+  // Add tags to query if present
+  if (tagIds && tagIds.length > 0) {
+    builder.innerJoin(
+      'asset.tags',
+      'asset_tags',
+      'asset_tags.id IN (SELECT id_descendant FROM tags_closure WHERE id_ancestor IN (:...tagIds))',
+      { tagIds: options.tagIds },
+    );
   }
 
   if (withStacked) {

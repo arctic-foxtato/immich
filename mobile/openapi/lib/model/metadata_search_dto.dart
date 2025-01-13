@@ -43,6 +43,7 @@ class MetadataSearchDto {
     this.state,
     this.takenAfter,
     this.takenBefore,
+    this.tagIds = const [],
     this.thumbnailPath,
     this.trashedAfter,
     this.trashedBefore,
@@ -257,6 +258,8 @@ class MetadataSearchDto {
   ///
   DateTime? takenBefore;
 
+  List<String> tagIds;
+
   ///
   /// Please note: This property should have been non-nullable! Since the specification file
   /// does not include a default value (using the "default:" property), however, the generated
@@ -371,6 +374,7 @@ class MetadataSearchDto {
     other.state == state &&
     other.takenAfter == takenAfter &&
     other.takenBefore == takenBefore &&
+    _deepEquality.equals(other.tagIds, tagIds) &&
     other.thumbnailPath == thumbnailPath &&
     other.trashedAfter == trashedAfter &&
     other.trashedBefore == trashedBefore &&
@@ -416,6 +420,7 @@ class MetadataSearchDto {
     (state == null ? 0 : state!.hashCode) +
     (takenAfter == null ? 0 : takenAfter!.hashCode) +
     (takenBefore == null ? 0 : takenBefore!.hashCode) +
+    (tagIds.hashCode) +
     (thumbnailPath == null ? 0 : thumbnailPath!.hashCode) +
     (trashedAfter == null ? 0 : trashedAfter!.hashCode) +
     (trashedBefore == null ? 0 : trashedBefore!.hashCode) +
@@ -429,7 +434,7 @@ class MetadataSearchDto {
     (withStacked == null ? 0 : withStacked!.hashCode);
 
   @override
-  String toString() => 'MetadataSearchDto[checksum=$checksum, city=$city, country=$country, createdAfter=$createdAfter, createdBefore=$createdBefore, deviceAssetId=$deviceAssetId, deviceId=$deviceId, encodedVideoPath=$encodedVideoPath, id=$id, isArchived=$isArchived, isEncoded=$isEncoded, isFavorite=$isFavorite, isMotion=$isMotion, isNotInAlbum=$isNotInAlbum, isOffline=$isOffline, isVisible=$isVisible, lensModel=$lensModel, libraryId=$libraryId, make=$make, model=$model, order=$order, originalFileName=$originalFileName, originalPath=$originalPath, page=$page, personIds=$personIds, previewPath=$previewPath, size=$size, state=$state, takenAfter=$takenAfter, takenBefore=$takenBefore, thumbnailPath=$thumbnailPath, trashedAfter=$trashedAfter, trashedBefore=$trashedBefore, type=$type, updatedAfter=$updatedAfter, updatedBefore=$updatedBefore, withArchived=$withArchived, withDeleted=$withDeleted, withExif=$withExif, withPeople=$withPeople, withStacked=$withStacked]';
+  String toString() => 'MetadataSearchDto[checksum=$checksum, city=$city, country=$country, createdAfter=$createdAfter, createdBefore=$createdBefore, deviceAssetId=$deviceAssetId, deviceId=$deviceId, encodedVideoPath=$encodedVideoPath, id=$id, isArchived=$isArchived, isEncoded=$isEncoded, isFavorite=$isFavorite, isMotion=$isMotion, isNotInAlbum=$isNotInAlbum, isOffline=$isOffline, isVisible=$isVisible, lensModel=$lensModel, libraryId=$libraryId, make=$make, model=$model, order=$order, originalFileName=$originalFileName, originalPath=$originalPath, page=$page, personIds=$personIds, previewPath=$previewPath, size=$size, state=$state, takenAfter=$takenAfter, takenBefore=$takenBefore, tagIds=$tagIds, thumbnailPath=$thumbnailPath, trashedAfter=$trashedAfter, trashedBefore=$trashedBefore, type=$type, updatedAfter=$updatedAfter, updatedBefore=$updatedBefore, withArchived=$withArchived, withDeleted=$withDeleted, withExif=$withExif, withPeople=$withPeople, withStacked=$withStacked]';
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{};
@@ -579,6 +584,7 @@ class MetadataSearchDto {
     } else {
     //  json[r'takenBefore'] = null;
     }
+      json[r'tagIds'] = this.tagIds;
     if (this.thumbnailPath != null) {
       json[r'thumbnailPath'] = this.thumbnailPath;
     } else {
@@ -674,6 +680,9 @@ class MetadataSearchDto {
         state: mapValueOfType<String>(json, r'state'),
         takenAfter: mapDateTime(json, r'takenAfter', r''),
         takenBefore: mapDateTime(json, r'takenBefore', r''),
+        tagIds: json[r'tagIds'] is Iterable
+            ? (json[r'tagIds'] as Iterable).cast<String>().toList(growable: false)
+            : const [],
         thumbnailPath: mapValueOfType<String>(json, r'thumbnailPath'),
         trashedAfter: mapDateTime(json, r'trashedAfter', r''),
         trashedBefore: mapDateTime(json, r'trashedBefore', r''),
