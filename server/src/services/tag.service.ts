@@ -44,24 +44,24 @@ export class TagService extends BaseService {
 
     const userId = auth.user.id;
     const value = parent ? `${parent.value}/${dto.name}` : dto.name;
-    const color = dto.color;
     const isPrivate = dto.isPrivate;
     const duplicate = await this.tagRepository.getByValue(userId, value);
     if (duplicate) {
       throw new BadRequestException(`A tag with that name already exists`);
     }
 
-    const tag = await this.tagRepository.create({ userId, value, parent, color, isPrivate });
+    const tag = await this.tagRepository.create({ userId, value, parent, isPrivate });
 
     return mapTag(tag);
   }
 
   async update(auth: AuthDto, id: string, dto: TagUpdateDto): Promise<TagResponseDto> {
+    console.log("updating tag");
     await this.requireAccess({ auth, permission: Permission.TAG_UPDATE, ids: [id] });
 
-    const { color, isPrivate, name: value } = dto;
+    const { color, isPrivate } = dto;
 
-    const tag = await this.tagRepository.update({ id, color, value, isPrivate });
+    const tag = await this.tagRepository.update({ id, color, isPrivate });
     return mapTag(tag);
   }
 

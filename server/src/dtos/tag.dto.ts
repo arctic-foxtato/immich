@@ -14,7 +14,6 @@ export class TagCreateDto {
 
   @IsHexColor()
   @Optional({ nullable: true, emptyToNull: true })
-  @Transform(({ value }) => (typeof value === 'string' && value[0] !== '#' ? `#${value}` : value))
   color?: string;
 
   @IsBoolean()
@@ -22,10 +21,6 @@ export class TagCreateDto {
 }
 
 export class TagUpdateDto {
-  @IsString()
-  @IsNotEmpty()
-  name!: string;
-
   @Optional({ nullable: true, emptyToNull: true })
   @IsHexColor()
   @Transform(({ value }) => (typeof value === 'string' && value[0] !== '#' ? `#${value}` : value))

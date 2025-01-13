@@ -18,7 +18,7 @@
   import { AppRoute, AssetAction, QueryParameter, SettingInputFieldType } from '$lib/constants';
   import { AssetStore } from '$lib/stores/assets.store';
   import { buildTree, normalizeTreePath } from '$lib/utils/tree-utils';
-  import {deleteTag, getAllTags, updateTag, type TagResponseDto, VideoCodec, createTag} from '@immich/sdk';
+  import { createTag, deleteTag, getAllTags, updateTag, type TagResponseDto } from '@immich/sdk';
   import { mdiPencil, mdiPlus, mdiTag, mdiTagMultiple, mdiTrashCanOutline } from '@mdi/js';
   import { t } from 'svelte-i18n';
   import type { PageData } from './$types';
@@ -76,22 +76,19 @@
   const navigateToView = (path: string) => goto(getLink(path));
 
   let isNewOpen = $state(false);
-  let tagName = $state('');
-  let tagColor = $state('');
+  let newTagValue = $state('');
   let isTagPrivate = $state(false);
 
   const handleCreate = () => {
-    tagName = tag ? tag.value + '/' : '';
+    newTagValue = tag ? tag.value + '/' : '';
     isNewOpen = true;
-    tagColor = tag?.color ?? '';
     isTagPrivate = tag?.isPrivate ?? false;
   };
 
   let isEditOpen = $state(false);
-
+  let newTagColor = $state('');
   const handleEdit = () => {
-    tagName = tag?.value + '/' ?? '';
-    tagColor = tag?.color ?? '';
+    newTagColor = tag?.color ?? '';
     isEditOpen = true;
     isTagPrivate = tag?.isPrivate ?? false;
   };
@@ -102,9 +99,8 @@
   };
 
   const handleSubmit = async () => {
-    if (tag && isEditOpen && tagColor) {
-      await updateTag({ id: tag.id, tagUpdateDto: { color: tagColor, name: tagName, isPrivate: isTagPrivate } });
-
+    if (tag && isEditOpen) {
+      await updateTag({ id: tag.id, tagUpdateDto: { color: newTagColor, isPrivate: isTagPrivate } });
       notificationController.show({
         message: $t('tag_updated', { values: { tag: tag.value } }),
         type: NotificationType.Info,
@@ -114,8 +110,8 @@
       isEditOpen = false;
     }
 
-    if (isNewOpen && tagName) {
-      const newTag = await createTag({ tagCreateDto: { color: tagColor, name: tagName, isPrivate: isTagPrivate }});
+    if (isNewOpen && newTagValue) {
+      const newTag = await createTag({ tagCreateDto: { name: newTagValue, isPrivate: isTagPrivate }});
 
       notificationController.show({
         message: $t('tag_created', { values: { tag: newTag.value } }),
@@ -230,16 +226,11 @@
         <SettingInputField
           inputType={SettingInputFieldType.TEXT}
           label={$t('tag').toUpperCase()}
-          bind:value={tagName}
+          bind:value={newTagValue}
           required={true}
           autofocus={true}
         />
       </div>
-      <SettingInputField
-        inputType={SettingInputFieldType.COLOR}
-        label={$t('color').toUpperCase()}
-        bind:value={tagColor}
-      />
       <div class="my-4 flex flex-col gap-2">
         <SettingSwitch title={$t('set_tag_private')} bind:checked={isTagPrivate} />
       </div>
@@ -257,18 +248,9 @@
     <form {onsubmit} autocomplete="off" id="edit-tag-form">
       <div class="my-4 flex flex-col gap-2">
         <SettingInputField
-          inputType={SettingInputFieldType.TEXT}
-          label={$t('tag').toUpperCase()}
-          bind:value={tagName}
-          required={true}
-          autofocus={true}
-        />
-      </div>
-      <div class="my-4 flex flex-col gap-2">
-        <SettingInputField
           inputType={SettingInputFieldType.COLOR}
           label={$t('color').toUpperCase()}
-          bind:value={tagColor}
+          bind:value={newTagColor}
         />
       </div>
       <div class="my-4 flex flex-col gap-2">

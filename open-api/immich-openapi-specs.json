@@ -12600,14 +12600,10 @@
           "isPrivate": {
             "default": false,
             "type": "boolean"
-          },
-          "name": {
-            "type": "string"
           }
         },
         "required": [
-          "isPrivate",
-          "name"
+          "isPrivate"
         ],
         "type": "object"
       },

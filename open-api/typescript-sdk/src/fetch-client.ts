@@ -1316,8 +1316,6 @@ export type TagBulkAssetsResponseDto = {
 };
 export type TagUpdateDto = {
     color?: string | null;
-    name: string;
-    parentId?: string | null;
     isPrivate?: boolean;
 };
 export type TimeBucketResponseDto = {
