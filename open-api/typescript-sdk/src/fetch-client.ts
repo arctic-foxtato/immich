@@ -234,6 +234,7 @@ export type TagResponseDto = {
     parentId?: string;
     updatedAt: string;
     value: string;
+    isPrivate?: boolean;
 };
 export type AssetResponseDto = {
     /** base64 encoded sha1 hash */
@@ -1301,6 +1302,7 @@ export type TagCreateDto = {
     color?: string;
     name: string;
     parentId?: string | null;
+    isPrivate?: boolean;
 };
 export type TagUpsertDto = {
     tags: string[];
@@ -1314,6 +1316,9 @@ export type TagBulkAssetsResponseDto = {
 };
 export type TagUpdateDto = {
     color?: string | null;
+    name: string;
+    parentId?: string | null;
+    isPrivate?: boolean;
 };
 export type TimeBucketResponseDto = {
     count: number;

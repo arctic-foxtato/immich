@@ -18,7 +18,7 @@
   import { AppRoute, AssetAction, QueryParameter, SettingInputFieldType } from '$lib/constants';
   import { AssetStore } from '$lib/stores/assets.store';
   import { buildTree, normalizeTreePath } from '$lib/utils/tree-utils';
-  import { deleteTag, getAllTags, updateTag, upsertTags, type TagResponseDto } from '@immich/sdk';
+  import {deleteTag, getAllTags, updateTag, type TagResponseDto, VideoCodec, createTag} from '@immich/sdk';
   import { mdiPencil, mdiPlus, mdiTag, mdiTagMultiple, mdiTrashCanOutline } from '@mdi/js';
   import { t } from 'svelte-i18n';
   import type { PageData } from './$types';
@@ -26,6 +26,7 @@
   import Breadcrumbs from '$lib/components/shared-components/tree/breadcrumbs.svelte';
   import SkipLink from '$lib/components/elements/buttons/skip-link.svelte';
   import { AssetInteraction } from '$lib/stores/asset-interaction.svelte';
+  import SettingSwitch from "$lib/components/shared-components/settings/setting-switch.svelte";
 
   interface Props {
     data: PageData;
@@ -75,17 +76,24 @@
   const navigateToView = (path: string) => goto(getLink(path));
 
   let isNewOpen = $state(false);
-  let newTagValue = $state('');
+  let tagName = $state('');
+  let tagColor = $state('');
+  let isTagPrivate = $state(false);
+
   const handleCreate = () => {
-    newTagValue = tag ? tag.value + '/' : '';
+    tagName = tag ? tag.value + '/' : '';
     isNewOpen = true;
+    tagColor = tag?.color ?? '';
+    isTagPrivate = tag?.isPrivate ?? false;
   };
 
   let isEditOpen = $state(false);
-  let newTagColor = $state('');
+
   const handleEdit = () => {
-    newTagColor = tag?.color ?? '';
+    tagName = tag?.value + '/' ?? '';
+    tagColor = tag?.color ?? '';
     isEditOpen = true;
+    isTagPrivate = tag?.isPrivate ?? false;
   };
 
   const handleCancel = () => {
@@ -94,8 +102,8 @@
   };
 
   const handleSubmit = async () => {
-    if (tag && isEditOpen && newTagColor) {
-      await updateTag({ id: tag.id, tagUpdateDto: { color: newTagColor } });
+    if (tag && isEditOpen && tagColor) {
+      await updateTag({ id: tag.id, tagUpdateDto: { color: tagColor, name: tagName, isPrivate: isTagPrivate } });
 
       notificationController.show({
         message: $t('tag_updated', { values: { tag: tag.value } }),
@@ -106,8 +114,8 @@
       isEditOpen = false;
     }
 
-    if (isNewOpen && newTagValue) {
-      const [newTag] = await upsertTags({ tagUpsertDto: { tags: [newTagValue] } });
+    if (isNewOpen && tagName) {
+      const newTag = await createTag({ tagCreateDto: { color: tagColor, name: tagName, isPrivate: isTagPrivate }});
 
       notificationController.show({
         message: $t('tag_created', { values: { tag: newTag.value } }),
@@ -222,10 +230,18 @@
         <SettingInputField
           inputType={SettingInputFieldType.TEXT}
           label={$t('tag').toUpperCase()}
-          bind:value={newTagValue}
+          bind:value={tagName}
           required={true}
           autofocus={true}
         />
+      </div>
+      <SettingInputField
+        inputType={SettingInputFieldType.COLOR}
+        label={$t('color').toUpperCase()}
+        bind:value={tagColor}
+      />
+      <div class="my-4 flex flex-col gap-2">
+        <SettingSwitch title={$t('set_tag_private')} bind:checked={isTagPrivate} />
       </div>
     </form>
 
@@ -241,10 +257,22 @@
     <form {onsubmit} autocomplete="off" id="edit-tag-form">
       <div class="my-4 flex flex-col gap-2">
         <SettingInputField
+          inputType={SettingInputFieldType.TEXT}
+          label={$t('tag').toUpperCase()}
+          bind:value={tagName}
+          required={true}
+          autofocus={true}
+        />
+      </div>
+      <div class="my-4 flex flex-col gap-2">
+        <SettingInputField
           inputType={SettingInputFieldType.COLOR}
           label={$t('color').toUpperCase()}
-          bind:value={newTagColor}
+          bind:value={tagColor}
         />
+      </div>
+      <div class="my-4 flex flex-col gap-2">
+        <SettingSwitch title={$t('set_tag_private')} bind:checked={isTagPrivate} />
       </div>
     </form>
 

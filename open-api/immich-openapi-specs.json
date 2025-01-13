@@ -12533,6 +12533,10 @@
             "pattern": "^#?([0-9A-F]{3}|[0-9A-F]{4}|[0-9A-F]{6}|[0-9A-F]{8})$",
             "type": "string"
           },
+          "isPrivate": {
+            "default": false,
+            "type": "boolean"
+          },
           "name": {
             "type": "string"
           },
@@ -12543,6 +12547,7 @@
           }
         },
         "required": [
+          "isPrivate",
           "name"
         ],
         "type": "object"
@@ -12558,6 +12563,9 @@
           },
           "id": {
             "type": "string"
+          },
+          "isPrivate": {
+            "type": "boolean"
           },
           "name": {
             "type": "string"
@@ -12588,8 +12596,19 @@
             "nullable": true,
             "pattern": "^#?([0-9A-F]{3}|[0-9A-F]{4}|[0-9A-F]{6}|[0-9A-F]{8})$",
             "type": "string"
+          },
+          "isPrivate": {
+            "default": false,
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
           }
         },
+        "required": [
+          "isPrivate",
+          "name"
+        ],
         "type": "object"
       },
       "TagUpsertDto": {

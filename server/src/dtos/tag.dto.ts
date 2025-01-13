@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsHexColor, IsNotEmpty, IsString } from 'class-validator';
+import {IsBoolean, IsHexColor, IsNotEmpty, IsString} from 'class-validator';
 import { TagEntity } from 'src/entities/tag.entity';
 import { Optional, ValidateUUID } from 'src/validation';
 
@@ -14,14 +14,25 @@ export class TagCreateDto {
 
   @IsHexColor()
   @Optional({ nullable: true, emptyToNull: true })
+  @Transform(({ value }) => (typeof value === 'string' && value[0] !== '#' ? `#${value}` : value))
   color?: string;
+
+  @IsBoolean()
+  isPrivate: boolean = false;
 }
 
 export class TagUpdateDto {
+  @IsString()
+  @IsNotEmpty()
+  name!: string;
+
   @Optional({ nullable: true, emptyToNull: true })
   @IsHexColor()
   @Transform(({ value }) => (typeof value === 'string' && value[0] !== '#' ? `#${value}` : value))
   color?: string | null;
+
+  @IsBoolean()
+  isPrivate: boolean = false;
 }
 
 export class TagUpsertDto {
@@ -51,6 +62,7 @@ export class TagResponseDto {
   createdAt!: Date;
   updatedAt!: Date;
   color?: string;
+  isPrivate?: boolean;
 }
 
 export function mapTag(entity: TagEntity): TagResponseDto {
@@ -62,5 +74,6 @@ export function mapTag(entity: TagEntity): TagResponseDto {
     createdAt: entity.createdAt,
     updatedAt: entity.updatedAt,
     color: entity.color ?? undefined,
+    isPrivate: entity.isPrivate ?? false,
   };
 }

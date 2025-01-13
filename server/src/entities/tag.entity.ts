@@ -50,4 +50,7 @@ export class TagEntity {
 
   @ManyToMany(() => AssetEntity, (asset) => asset.tags, { onUpdate: 'CASCADE', onDelete: 'CASCADE' })
   assets?: AssetEntity[];
+
+  @Column({type: 'boolean', default: false })
+  isPrivate?: boolean;
 }
