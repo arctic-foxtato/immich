@@ -26,6 +26,7 @@
     searchAssets,
     searchSmart,
     getPerson,
+    getTagById,
     type SmartSearchDto,
     type MetadataSearchDto,
     type AlbumResponseDto,
@@ -193,9 +194,26 @@
       make: $t('camera_brand'),
       model: $t('camera_model'),
       personIds: $t('people'),
+      tagIds: $t('tags'),
       originalFileName: $t('file_name'),
     };
     return keyMap[key] || key;
+  }
+
+  async function getTagName(tagIds: string[]) {
+    const tagNames = await Promise.all(
+      tagIds.map(async (tagId) => {
+        const tag = await getTagById({ id: tagId });
+
+        if (tag.name == '') {
+          return $t('no_name');
+        }
+
+        return tag.name;
+      }),
+    );
+
+    return tagNames.join(', ');
   }
 
   async function getPersonName(personIds: string[]) {
@@ -297,6 +315,10 @@
             {:else if key === 'personIds' && Array.isArray(value)}
               {#await getPersonName(value) then personName}
                 {personName}
+              {/await}
+            {:else if key === 'tagIds' && Array.isArray(value)}
+              {#await getTagName(value) then tagName}
+                {tagName}
               {/await}
             {:else if value === null || value === ''}
               {$t('unknown')}

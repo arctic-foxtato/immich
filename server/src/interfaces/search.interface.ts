@@ -112,6 +112,10 @@ export interface SearchPeopleOptions {
   personIds?: string[];
 }
 
+export interface SearchTagsOptions {
+  tagIds?: string[];
+}
+
 export interface SearchOrderOptions {
   orderDirection?: 'asc' | 'desc';
 }
@@ -128,7 +132,8 @@ type BaseAssetSearchOptions = SearchDateOptions &
   SearchPathOptions &
   SearchStatusOptions &
   SearchUserIdOptions &
-  SearchPeopleOptions;
+  SearchPeopleOptions &
+  SearchTagsOptions;
 
 export type AssetSearchOptions = BaseAssetSearchOptions & SearchRelationOptions;
 

@@ -794,6 +794,7 @@ export type MetadataSearchDto = {
     state?: string | null;
     takenAfter?: string;
     takenBefore?: string;
+    tagIds?: string[];
     thumbnailPath?: string;
     trashedAfter?: string;
     trashedBefore?: string;

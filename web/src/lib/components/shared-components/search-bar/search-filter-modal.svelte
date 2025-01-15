@@ -8,6 +8,7 @@
     query: string;
     queryType: 'smart' | 'metadata';
     personIds: SvelteSet<string>;
+    tagIds: SvelteSet<string>;
     location: SearchLocationFilter;
     camera: SearchCameraFilter;
     date: SearchDateFilter;
@@ -26,6 +27,7 @@
   import SearchMediaSection from './search-media-section.svelte';
   import { parseUtcDate } from '$lib/utils/date-time';
   import SearchDisplaySection from './search-display-section.svelte';
+  import SearchTagSection from './search-tag-section.svelte';
   import SearchTextSection from './search-text-section.svelte';
   import { t } from 'svelte-i18n';
   import FullScreenModal from '$lib/components/shared-components/full-screen-modal.svelte';
@@ -78,6 +80,7 @@
         : searchQuery.type === AssetTypeEnum.Video
           ? MediaType.Video
           : MediaType.All,
+    tagIds: new SvelteSet('tagIds' in searchQuery ? searchQuery.tagIds : []),
   });
 
   const resetForm = () => {
@@ -90,6 +93,7 @@
       date: {},
       display: {},
       mediaType: MediaType.All,
+      tagIds: new SvelteSet()
     };
   };
 
@@ -117,6 +121,7 @@
       isFavorite: filter.display.isFavorite || undefined,
       isNotInAlbum: filter.display.isNotInAlbum || undefined,
       personIds: filter.personIds.size > 0 ? [...filter.personIds] : undefined,
+      tagIds: filter.tagIds.size > 0 ? [...filter.tagIds] : undefined,
       type,
     };
 
@@ -142,6 +147,9 @@
 
       <!-- TEXT -->
       <SearchTextSection bind:query={filter.query} bind:queryType={filter.queryType} />
+
+      <!-- TAG -->
+      <SearchTagSection bind:selectedTagIds={filter.tagIds} />
 
       <!-- LOCATION -->
       <SearchLocationSection bind:filters={filter.location} />
