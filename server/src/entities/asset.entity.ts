@@ -267,7 +267,9 @@ export function hasTags<O>(qb: SelectQueryBuilder<DB, 'assets', O>, tagIds: stri
         .innerJoin('tags_closure', 'tag_asset.tagsId', 'tags_closure.id_descendant')
         .where('tags_closure.id_ancestor', '=', anyUuid(tagIds!))
         .groupBy('assetsId')
-        .$if(!anyTags, (eb) => eb.having((eb) => eb.fn.count('tags_closure.id_ancestor').distinct(), '>=', tagIds.length))
+        .$if(!anyTags, (eb) =>
+          eb.having((eb) => eb.fn.count('tags_closure.id_ancestor').distinct(), '>=', tagIds.length),
+        )
         .as('has_tags'),
     (join) => join.onRef('has_tags.assetsId', '=', 'assets.id'),
   );

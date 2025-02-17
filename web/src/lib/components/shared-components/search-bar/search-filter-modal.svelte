@@ -9,7 +9,6 @@
     queryType: 'smart' | 'metadata' | 'description';
     personIds: SvelteSet<string>;
     tagIds: SvelteSet<string>;
-    anyTags: boolean;
     location: SearchLocationFilter;
     camera: SearchCameraFilter;
     date: SearchDateFilter;

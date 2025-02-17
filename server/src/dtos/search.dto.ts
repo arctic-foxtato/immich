@@ -116,7 +116,7 @@ class BaseSearchDto {
   tagIds?: string[];
 
   @ValidateBoolean({ optional: true })
-  anyTags?: boolean
+  anyTags?: boolean;
 }
 
 export class RandomSearchDto extends BaseSearchDto {

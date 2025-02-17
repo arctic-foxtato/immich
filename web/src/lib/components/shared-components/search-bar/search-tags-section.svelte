@@ -50,6 +50,7 @@
           <label class="immich-form-label" for="tags">{$t('tags').toUpperCase()}</label>
           <div class="flex flex-row">
             <Combobox
+              label={undefined}
               onSelect={handleSelect}
               defaultFirstOption
               options={allTags.map((tag) => ({ id: tag.id, label: tag.value, value: tag.id }))}
