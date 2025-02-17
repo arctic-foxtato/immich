@@ -114,6 +114,9 @@ class BaseSearchDto {
 
   @ValidateUUID({ each: true, optional: true })
   tagIds?: string[];
+
+  @ValidateBoolean({ optional: true })
+  anyTags?: boolean
 }
 
 export class RandomSearchDto extends BaseSearchDto {

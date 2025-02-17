@@ -7,12 +7,16 @@
   import Icon from '$lib/components/elements/icon.svelte';
   import { mdiClose } from '@mdi/js';
   import { preferences } from '$lib/stores/user.store';
+  import Checkbox from "$lib/components/elements/checkbox.svelte";
 
   interface Props {
     selectedTags: SvelteSet<string>;
+    anyTags: boolean;
   }
 
-  let { selectedTags = $bindable() }: Props = $props();
+  let { selectedTags = $bindable(),
+    anyTags = $bindable()
+  }: Props = $props();
 
   let allTags: TagResponseDto[] = $state([]);
   let tagMap = $derived(Object.fromEntries(allTags.map((tag) => [tag.id, tag])));
@@ -34,20 +38,29 @@
   const handleRemove = (tag: string) => {
     selectedTags.delete(tag);
   };
+
 </script>
 
 {#if $preferences?.tags?.enabled}
-  <div id="location-selection">
+  <div id="tag-selection">
     <form autocomplete="off" id="create-tag-form">
-      <div class="my-4 flex flex-col gap-2">
-        <Combobox
-          onSelect={handleSelect}
-          label={$t('tags').toUpperCase()}
-          defaultFirstOption
-          options={allTags.map((tag) => ({ id: tag.id, label: tag.value, value: tag.id }))}
-          bind:selectedOption
-          placeholder={$t('search_tags')}
-        />
+
+      <div class="grid grid-cols-[auto]">
+        <div class="flex flex-col my-4 gap-2">
+          <label class="immich-form-label" for="tags">{$t('tags').toUpperCase()}</label>
+          <div class="flex flex-row">
+            <Combobox
+              onSelect={handleSelect}
+              defaultFirstOption
+              options={allTags.map((tag) => ({ id: tag.id, label: tag.value, value: tag.id }))}
+              bind:selectedOption
+              placeholder={$t('search_tags')}
+            />
+            <div class="flex" style="margin-left: 16px">
+              <Checkbox labelClass="w-[max-content]" id="not-any-tags" label={$t('match_any_tags')} bind:checked={anyTags} />
+            </div>
+          </div>
+        </div>
       </div>
     </form>
 

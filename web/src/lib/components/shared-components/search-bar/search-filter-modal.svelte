@@ -9,6 +9,7 @@
     queryType: 'smart' | 'metadata' | 'description';
     personIds: SvelteSet<string>;
     tagIds: SvelteSet<string>;
+    anyTags: boolean;
     location: SearchLocationFilter;
     camera: SearchCameraFilter;
     date: SearchDateFilter;
@@ -57,6 +58,7 @@
     queryType: 'query' in searchQuery ? 'smart' : 'metadata',
     personIds: new SvelteSet('personIds' in searchQuery ? searchQuery.personIds : []),
     tagIds: new SvelteSet('tagIds' in searchQuery ? searchQuery.tagIds : []),
+    anyTags: searchQuery.anyTags,
     location: {
       country: withNullAsUndefined(searchQuery.country),
       state: withNullAsUndefined(searchQuery.state),
@@ -89,6 +91,7 @@
       queryType: 'smart',
       personIds: new SvelteSet(),
       tagIds: new SvelteSet(),
+      anyTags: false,
       location: {},
       camera: {},
       date: {},
@@ -122,6 +125,7 @@
       isFavorite: filter.display.isFavorite || undefined,
       isNotInAlbum: filter.display.isNotInAlbum || undefined,
       personIds: filter.personIds.size > 0 ? [...filter.personIds] : undefined,
+      anyTags: filter.anyTags || false,
       tagIds: filter.tagIds.size > 0 ? [...filter.tagIds] : undefined,
       type,
     };
@@ -150,7 +154,7 @@
       <SearchTextSection bind:query={filter.query} bind:queryType={filter.queryType} />
 
       <!-- TAGS -->
-      <SearchTagsSection bind:selectedTags={filter.tagIds} />
+      <SearchTagsSection bind:selectedTags={filter.tagIds} bind:anyTags={filter.anyTags} />
 
       <!-- LOCATION -->
       <SearchLocationSection bind:filters={filter.location} />
