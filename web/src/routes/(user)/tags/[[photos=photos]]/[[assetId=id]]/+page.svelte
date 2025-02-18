@@ -11,6 +11,7 @@
     NotificationType,
   } from '$lib/components/shared-components/notification/notification';
   import SettingInputField from '$lib/components/shared-components/settings/setting-input-field.svelte';
+  import SettingSwitch from "$lib/components/shared-components/settings/setting-switch.svelte";
   import SideBarSection from '$lib/components/shared-components/side-bar/side-bar-section.svelte';
   import Breadcrumbs from '$lib/components/shared-components/tree/breadcrumbs.svelte';
   import TreeItemThumbnails from '$lib/components/shared-components/tree/tree-item-thumbnails.svelte';
@@ -19,7 +20,7 @@
   import { AssetInteraction } from '$lib/stores/asset-interaction.svelte';
   import { AssetStore } from '$lib/stores/assets.store';
   import { buildTree, normalizeTreePath } from '$lib/utils/tree-utils';
-  import { deleteTag, getAllTags, updateTag, upsertTags, type TagResponseDto } from '@immich/sdk';
+  import { createTag, deleteTag, getAllTags, updateTag, upsertTags, type TagResponseDto } from '@immich/sdk';
   import { Button, HStack, Text } from '@immich/ui';
   import { mdiPencil, mdiPlus, mdiTag, mdiTagMultiple, mdiTrashCanOutline } from '@mdi/js';
   import { t } from 'svelte-i18n';
@@ -74,9 +75,12 @@
 
   let isNewOpen = $state(false);
   let newTagValue = $state('');
+  let isTagPrivate = $state(false);
+
   const handleCreate = () => {
     newTagValue = tag ? tag.value + '/' : '';
     isNewOpen = true;
+    isTagPrivate = tag?.isPrivate ?? false;
   };
 
   let isEditOpen = $state(false);
@@ -84,6 +88,7 @@
   const handleEdit = () => {
     newTagColor = tag?.color ?? '';
     isEditOpen = true;
+    isTagPrivate = tag?.isPrivate ?? false;
   };
 
   const handleCancel = () => {
@@ -92,8 +97,8 @@
   };
 
   const handleSubmit = async () => {
-    if (tag && isEditOpen && newTagColor) {
-      await updateTag({ id: tag.id, tagUpdateDto: { color: newTagColor } });
+    if (tag && isEditOpen) {
+      await updateTag({ id: tag.id, tagUpdateDto: { color: newTagColor, isPrivate: isTagPrivate } });
 
       notificationController.show({
         message: $t('tag_updated', { values: { tag: tag.value } }),
@@ -105,7 +110,7 @@
     }
 
     if (isNewOpen && newTagValue) {
-      const [newTag] = await upsertTags({ tagUpsertDto: { tags: [newTagValue] } });
+      const newTag = await createTag({ tagCreateDto: { name: newTagValue, isPrivate: isTagPrivate }});
 
       notificationController.show({
         message: $t('tag_created', { values: { tag: newTag.value } }),
@@ -216,6 +221,9 @@
           autofocus={true}
         />
       </div>
+      <div class="my-4 flex flex-col gap-2">
+        <SettingSwitch title={$t('set_tag_private')} bind:checked={isTagPrivate} />
+      </div>
     </form>
 
     {#snippet stickyBottom()}
@@ -234,6 +242,9 @@
           label={$t('color').toUpperCase()}
           bind:value={newTagColor}
         />
+      </div>
+      <div class="my-4 flex flex-col gap-2">
+        <SettingSwitch title={$t('set_tag_private')} bind:checked={isTagPrivate} />
       </div>
     </form>
 

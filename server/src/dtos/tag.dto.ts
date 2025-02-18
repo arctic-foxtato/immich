@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsHexColor, IsNotEmpty, IsString } from 'class-validator';
+import {IsBoolean, IsHexColor, IsNotEmpty, IsString} from 'class-validator';
 import { TagEntity } from 'src/entities/tag.entity';
 import { Optional, ValidateHexColor, ValidateUUID } from 'src/validation';
 
@@ -14,12 +14,18 @@ export class TagCreateDto {
   @IsHexColor()
   @Optional({ nullable: true, emptyToNull: true })
   color?: string;
+
+  @IsBoolean()
+  isPrivate: boolean = false;
 }
 
 export class TagUpdateDto {
   @Optional({ emptyToNull: true, nullable: true })
   @ValidateHexColor()
   color?: string | null;
+
+  @IsBoolean()
+  isPrivate: boolean = false;
 }
 
 export class TagUpsertDto {
@@ -49,6 +55,7 @@ export class TagResponseDto {
   createdAt!: Date;
   updatedAt!: Date;
   color?: string;
+  isPrivate?: boolean;
 }
 
 export function mapTag(entity: TagEntity): TagResponseDto {
@@ -60,5 +67,6 @@ export function mapTag(entity: TagEntity): TagResponseDto {
     createdAt: entity.createdAt,
     updatedAt: entity.updatedAt,
     color: entity.color ?? undefined,
+    isPrivate: entity.isPrivate ?? false,
   };
 }

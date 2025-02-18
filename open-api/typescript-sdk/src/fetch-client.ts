@@ -244,6 +244,7 @@ export type TagResponseDto = {
     color?: string;
     createdAt: string;
     id: string;
+    isPrivate?: boolean;
     name: string;
     parentId?: string;
     updatedAt: string;
@@ -1325,6 +1326,7 @@ export type ReverseGeocodingStateResponseDto = {
 };
 export type TagCreateDto = {
     color?: string;
+    isPrivate?: boolean;
     name: string;
     parentId?: string | null;
 };
@@ -1340,6 +1342,7 @@ export type TagBulkAssetsResponseDto = {
 };
 export type TagUpdateDto = {
     color?: string | null;
+    isPrivate?: boolean;
 };
 export type TimeBucketResponseDto = {
     count: number;
