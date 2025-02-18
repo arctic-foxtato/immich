@@ -122,6 +122,7 @@ export interface SearchPeopleOptions {
 
 export interface SearchTagOptions {
   tagIds?: string[];
+  anyTags?: boolean;
 }
 
 export interface SearchOrderOptions {
