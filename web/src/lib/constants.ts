@@ -119,6 +119,14 @@ export const fallbackLocale = {
   name: 'English (US)',
 };
 
+export enum QueryType {
+  SMART = 'smart',
+  METADATA = 'metadata',
+  DESCRIPTION = 'description',
+}
+
+export const validQueryTypes = new Set([QueryType.SMART, QueryType.METADATA, QueryType.DESCRIPTION]);
+
 export const locales = [
   { code: 'af-ZA', name: 'Afrikaans (South Africa)' },
   { code: 'sq-AL', name: 'Albanian (Albania)' },
@@ -275,10 +283,12 @@ export const langs = [
   { name: 'Greek', code: 'el', loader: () => import('$i18n/el.json') },
   { name: 'Spanish', code: 'es', loader: () => import('$i18n/es.json') },
   { name: 'Estonian', code: 'et', loader: () => import('$i18n/et.json') },
+  { name: 'Basque', code: 'eu', loader: () => import('$i18n/eu.json') },
   { name: 'Persian', code: 'fa', loader: () => import('$i18n/fa.json') },
   { name: 'Finnish', code: 'fi', loader: () => import('$i18n/fi.json') },
   { name: 'Filipino', code: 'fil', loader: () => import('$i18n/fil.json') },
   { name: 'French', code: 'fr', loader: () => import('$i18n/fr.json') },
+  { name: 'Galician', code: 'gl', loader: () => import('$i18n/gl.json') },
   { name: 'Hebrew', code: 'he', loader: () => import('$i18n/he.json') },
   { name: 'Hindi', code: 'hi', loader: () => import('$i18n/hi.json') },
   { name: 'Croatian', code: 'hr', loader: () => import('$i18n/hr.json') },
@@ -287,7 +297,10 @@ export const langs = [
   { name: 'Indonesian', code: 'id', loader: () => import('$i18n/id.json') },
   { name: 'Italian', code: 'it', loader: () => import('$i18n/it.json') },
   { name: 'Japanese', code: 'ja', loader: () => import('$i18n/ja.json') },
+  { name: 'Georgian', code: 'ka', loader: () => import('$i18n/ka.json') },
+  { name: 'Kazakh', code: 'kk', loader: () => import('$i18n/kk.json') },
   { name: 'Kurdish (Northern)', code: 'kmr', loader: () => import('$i18n/kmr.json') },
+  { name: 'Kannada', code: 'kn', loader: () => import('$i18n/kn.json') },
   { name: 'Korean', code: 'ko', loader: () => import('$i18n/ko.json') },
   { name: 'Luxembourgish', code: 'lb', loader: () => import('$i18n/lb.json') },
   { name: 'Lithuanian', code: 'lt', loader: () => import('$i18n/lt.json') },
@@ -300,6 +313,7 @@ export const langs = [
   { name: 'Norwegian Bokmål', code: 'nb-NO', weblateCode: 'nb_NO', loader: () => import('$i18n/nb_NO.json') },
   { name: 'Dutch', code: 'nl', loader: () => import('$i18n/nl.json') },
   { name: 'Norwegian Nynorsk', code: 'nn', loader: () => import('$i18n/nn.json') },
+  { name: 'Punjabi', code: 'pa', loader: () => import('$i18n/pa.json') },
   { name: 'Polish', code: 'pl', loader: () => import('$i18n/pl.json') },
   { name: 'Portuguese', code: 'pt', loader: () => import('$i18n/pt.json') },
   { name: 'Portuguese (Brazil) ', code: 'pt-BR', weblateCode: 'pt_BR', loader: () => import('$i18n/pt_BR.json') },
@@ -307,6 +321,7 @@ export const langs = [
   { name: 'Russian', code: 'ru', loader: () => import('$i18n/ru.json') },
   { name: 'Slovak', code: 'sk', loader: () => import('$i18n/sk.json') },
   { name: 'Slovenian', code: 'sl', loader: () => import('$i18n/sl.json') },
+  { name: 'Albanian', code: 'sq', loader: () => import('$i18n/sq.json') },
   {
     name: 'Serbian (Cyrillic)',
     code: 'sr-Cyrl',
@@ -350,15 +365,24 @@ export enum SettingInputFieldType {
   COLOR = 'color',
 }
 
-export enum AlbumPageViewMode {
-  LINK_SHARING = 'link-sharing',
-  SELECT_USERS = 'select-users',
-  SELECT_THUMBNAIL = 'select-thumbnail',
-  SELECT_ASSETS = 'select-assets',
-  VIEW_USERS = 'view-users',
-  VIEW = 'view',
-  OPTIONS = 'options',
-}
+export const AlbumPageViewMode = {
+  LINK_SHARING: 'link-sharing',
+  SELECT_USERS: 'select-users',
+  SELECT_THUMBNAIL: 'select-thumbnail',
+  SELECT_ASSETS: 'select-assets',
+  VIEW_USERS: 'view-users',
+  VIEW: 'view',
+  OPTIONS: 'options',
+};
+
+export type AlbumPageViewMode =
+  | typeof AlbumPageViewMode.LINK_SHARING
+  | typeof AlbumPageViewMode.SELECT_USERS
+  | typeof AlbumPageViewMode.SELECT_THUMBNAIL
+  | typeof AlbumPageViewMode.SELECT_ASSETS
+  | typeof AlbumPageViewMode.VIEW_USERS
+  | typeof AlbumPageViewMode.VIEW
+  | typeof AlbumPageViewMode.OPTIONS;
 
 export enum PersonPageViewMode {
   VIEW_ASSETS = 'view-assets',

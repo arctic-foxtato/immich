@@ -1,16 +1,13 @@
 import { LoggingRepository } from 'src/repositories/logging.repository';
 import { EmailRenderRequest, EmailTemplate, NotificationRepository } from 'src/repositories/notification.repository';
-import { ILoggingRepository, newLoggingRepositoryMock } from 'test/repositories/logger.repository.mock';
-import { Mocked } from 'vitest';
+import { automock } from 'test/utils';
 
 describe(NotificationRepository.name, () => {
   let sut: NotificationRepository;
-  let loggerMock: Mocked<LoggingRepository>;
 
   beforeEach(() => {
-    loggerMock = newLoggingRepositoryMock() as ILoggingRepository as Mocked<LoggingRepository>;
-
-    sut = new NotificationRepository(loggerMock as LoggingRepository);
+    // eslint-disable-next-line no-sparse-arrays
+    sut = new NotificationRepository(automock(LoggingRepository, { args: [, { getEnv: () => ({}) }], strict: false }));
   });
 
   describe('renderEmail', () => {

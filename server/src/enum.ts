@@ -33,6 +33,10 @@ export enum AssetType {
 }
 
 export enum AssetFileType {
+  /**
+   * An full/large-size image extracted/converted from RAW photos
+   */
+  FULLSIZE = 'fullsize',
   PREVIEW = 'preview',
   THUMBNAIL = 'thumbnail',
 }
@@ -187,6 +191,7 @@ export enum StorageFolder {
 export enum SystemMetadataKey {
   REVERSE_GEOCODING_STATE = 'reverse-geocoding-state',
   FACIAL_RECOGNITION_STATE = 'facial-recognition-state',
+  MEMORIES_STATE = 'memories-state',
   ADMIN_ONBOARDING = 'admin-onboarding',
   SYSTEM_CONFIG = 'system-config',
   SYSTEM_FLAGS = 'system-flags',
@@ -227,16 +232,21 @@ export enum AssetStatus {
 export enum SourceType {
   MACHINE_LEARNING = 'machine-learning',
   EXIF = 'exif',
+  MANUAL = 'manual',
 }
 
 export enum ManualJobName {
   PERSON_CLEANUP = 'person-cleanup',
   TAG_CLEANUP = 'tag-cleanup',
   USER_CLEANUP = 'user-cleanup',
+  MEMORY_CLEANUP = 'memory-cleanup',
+  MEMORY_CREATE = 'memory-create',
+  BACKUP_DATABASE = 'backup-database',
 }
 
 export enum AssetPathType {
   ORIGINAL = 'original',
+  FULLSIZE = 'fullsize',
   PREVIEW = 'preview',
   THUMBNAIL = 'thumbnail',
   ENCODED_VIDEO = 'encoded_video',
@@ -433,7 +443,6 @@ export enum JobName {
   // metadata
   QUEUE_METADATA_EXTRACTION = 'queue-metadata-extraction',
   METADATA_EXTRACTION = 'metadata-extraction',
-  LINK_LIVE_PHOTOS = 'link-live-photos',
 
   // user
   USER_DELETION = 'user-deletion',
@@ -466,16 +475,21 @@ export enum JobName {
   // library management
   LIBRARY_QUEUE_SYNC_FILES = 'library-queue-sync-files',
   LIBRARY_QUEUE_SYNC_ASSETS = 'library-queue-sync-assets',
-  LIBRARY_SYNC_FILE = 'library-sync-file',
-  LIBRARY_SYNC_ASSET = 'library-sync-asset',
+  LIBRARY_SYNC_FILES = 'library-sync-files',
+  LIBRARY_SYNC_ASSETS = 'library-sync-assets',
+  LIBRARY_ASSET_REMOVAL = 'handle-library-file-deletion',
   LIBRARY_DELETE = 'library-delete',
-  LIBRARY_QUEUE_SYNC_ALL = 'library-queue-sync-all',
+  LIBRARY_QUEUE_SCAN_ALL = 'library-queue-scan-all',
   LIBRARY_QUEUE_CLEANUP = 'library-queue-cleanup',
 
   // cleanup
   DELETE_FILES = 'delete-files',
   CLEAN_OLD_AUDIT_LOGS = 'clean-old-audit-logs',
   CLEAN_OLD_SESSION_TOKENS = 'clean-old-session-tokens',
+
+  // memories
+  MEMORIES_CLEANUP = 'memories-cleanup',
+  MEMORIES_CREATE = 'memories-create',
 
   // smart search
   QUEUE_SMART_SEARCH = 'queue-smart-search',
@@ -536,4 +550,29 @@ export enum DatabaseLock {
   Library = 1337,
   GetSystemConfig = 69,
   BackupDatabase = 42,
+}
+
+export enum SyncRequestType {
+  UsersV1 = 'UsersV1',
+  PartnersV1 = 'PartnersV1',
+  AssetsV1 = 'AssetsV1',
+  AssetExifsV1 = 'AssetExifsV1',
+  PartnerAssetsV1 = 'PartnerAssetsV1',
+  PartnerAssetExifsV1 = 'PartnerAssetExifsV1',
+}
+
+export enum SyncEntityType {
+  UserV1 = 'UserV1',
+  UserDeleteV1 = 'UserDeleteV1',
+
+  PartnerV1 = 'PartnerV1',
+  PartnerDeleteV1 = 'PartnerDeleteV1',
+
+  AssetV1 = 'AssetV1',
+  AssetDeleteV1 = 'AssetDeleteV1',
+  AssetExifV1 = 'AssetExifV1',
+
+  PartnerAssetV1 = 'PartnerAssetV1',
+  PartnerAssetDeleteV1 = 'PartnerAssetDeleteV1',
+  PartnerAssetExifV1 = 'PartnerAssetExifV1',
 }

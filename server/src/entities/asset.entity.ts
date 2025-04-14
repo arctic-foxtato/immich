@@ -1,182 +1,56 @@
 import { DeduplicateJoinsPlugin, ExpressionBuilder, Kysely, SelectQueryBuilder, sql } from 'kysely';
 import { jsonArrayFrom, jsonObjectFrom } from 'kysely/helpers/postgres';
+import { AssetFace, AssetFile, Exif, Stack, Tag, User } from 'src/database';
 import { DB } from 'src/db';
 import { AlbumEntity } from 'src/entities/album.entity';
-import { AssetFaceEntity } from 'src/entities/asset-face.entity';
-import { AssetFileEntity } from 'src/entities/asset-files.entity';
 import { AssetJobStatusEntity } from 'src/entities/asset-job-status.entity';
-import { ExifEntity } from 'src/entities/exif.entity';
-import { LibraryEntity } from 'src/entities/library.entity';
 import { SharedLinkEntity } from 'src/entities/shared-link.entity';
-import { SmartSearchEntity } from 'src/entities/smart-search.entity';
-import { StackEntity } from 'src/entities/stack.entity';
-import { TagEntity } from 'src/entities/tag.entity';
-import { UserEntity } from 'src/entities/user.entity';
 import { AssetFileType, AssetStatus, AssetType } from 'src/enum';
 import { TimeBucketSize } from 'src/repositories/asset.repository';
 import { AssetSearchBuilderOptions } from 'src/repositories/search.repository';
 import { anyUuid, asUuid } from 'src/utils/database';
-import {
-  Column,
-  CreateDateColumn,
-  DeleteDateColumn,
-  Entity,
-  Index,
-  JoinColumn,
-  JoinTable,
-  ManyToMany,
-  ManyToOne,
-  OneToMany,
-  OneToOne,
-  PrimaryGeneratedColumn,
-  UpdateDateColumn,
-} from 'typeorm';
 
 export const ASSET_CHECKSUM_CONSTRAINT = 'UQ_assets_owner_checksum';
 
-@Entity('assets')
-// Checksums must be unique per user and library
-@Index(ASSET_CHECKSUM_CONSTRAINT, ['owner', 'checksum'], {
-  unique: true,
-  where: '"libraryId" IS NULL',
-})
-@Index('UQ_assets_owner_library_checksum' + '', ['owner', 'library', 'checksum'], {
-  unique: true,
-  where: '"libraryId" IS NOT NULL',
-})
-@Index('idx_local_date_time', { synchronize: false })
-@Index('idx_local_date_time_month', { synchronize: false })
-@Index('IDX_originalPath_libraryId', ['originalPath', 'libraryId'])
-@Index('IDX_asset_id_stackId', ['id', 'stackId'])
-@Index('idx_originalFileName_trigram', { synchronize: false })
-// For all assets, each originalpath must be unique per user and library
 export class AssetEntity {
-  @PrimaryGeneratedColumn('uuid')
   id!: string;
-
-  @Column()
   deviceAssetId!: string;
-
-  @ManyToOne(() => UserEntity, { onDelete: 'CASCADE', onUpdate: 'CASCADE', nullable: false })
-  owner!: UserEntity;
-
-  @Column()
+  owner!: User;
   ownerId!: string;
-
-  @ManyToOne(() => LibraryEntity, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
-  library?: LibraryEntity | null;
-
-  @Column({ nullable: true })
   libraryId?: string | null;
-
-  @Column()
   deviceId!: string;
-
-  @Column()
   type!: AssetType;
-
-  @Column({ type: 'enum', enum: AssetStatus, default: AssetStatus.ACTIVE })
   status!: AssetStatus;
-
-  @Column()
   originalPath!: string;
-
-  @OneToMany(() => AssetFileEntity, (assetFile) => assetFile.asset)
-  files!: AssetFileEntity[];
-
-  @Column({ type: 'bytea', nullable: true })
+  files!: AssetFile[];
   thumbhash!: Buffer | null;
-
-  @Column({ type: 'varchar', nullable: true, default: '' })
   encodedVideoPath!: string | null;
-
-  @CreateDateColumn({ type: 'timestamptz' })
   createdAt!: Date;
-
-  @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt!: Date;
-
-  @DeleteDateColumn({ type: 'timestamptz', nullable: true })
+  updateId?: string;
   deletedAt!: Date | null;
-
-  @Index('idx_asset_file_created_at')
-  @Column({ type: 'timestamptz', nullable: true, default: null })
   fileCreatedAt!: Date;
-
-  @Column({ type: 'timestamptz', nullable: true, default: null })
   localDateTime!: Date;
-
-  @Column({ type: 'timestamptz', nullable: true, default: null })
   fileModifiedAt!: Date;
-
-  @Column({ type: 'boolean', default: false })
   isFavorite!: boolean;
-
-  @Column({ type: 'boolean', default: false })
   isArchived!: boolean;
-
-  @Column({ type: 'boolean', default: false })
   isExternal!: boolean;
-
-  @Column({ type: 'boolean', default: false })
   isOffline!: boolean;
-
-  @Column({ type: 'bytea' })
-  @Index()
   checksum!: Buffer; // sha1 checksum
-
-  @Column({ type: 'varchar', nullable: true })
   duration!: string | null;
-
-  @Column({ type: 'boolean', default: true })
   isVisible!: boolean;
-
-  @ManyToOne(() => AssetEntity, { nullable: true, onUpdate: 'CASCADE', onDelete: 'SET NULL' })
-  @JoinColumn()
   livePhotoVideo!: AssetEntity | null;
-
-  @Column({ nullable: true })
   livePhotoVideoId!: string | null;
-
-  @Column({ type: 'varchar' })
-  @Index()
   originalFileName!: string;
-
-  @Column({ type: 'varchar', nullable: true })
   sidecarPath!: string | null;
-
-  @OneToOne(() => ExifEntity, (exifEntity) => exifEntity.asset)
-  exifInfo?: ExifEntity;
-
-  @OneToOne(() => SmartSearchEntity, (smartSearchEntity) => smartSearchEntity.asset)
-  smartSearch?: SmartSearchEntity;
-
-  @ManyToMany(() => TagEntity, (tag) => tag.assets, { cascade: true })
-  @JoinTable({ name: 'tag_asset', synchronize: false })
-  tags!: TagEntity[];
-
-  @ManyToMany(() => SharedLinkEntity, (link) => link.assets, { cascade: true })
-  @JoinTable({ name: 'shared_link__asset' })
+  exifInfo?: Exif;
+  tags?: Tag[];
   sharedLinks!: SharedLinkEntity[];
-
-  @ManyToMany(() => AlbumEntity, (album) => album.assets, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
   albums?: AlbumEntity[];
-
-  @OneToMany(() => AssetFaceEntity, (assetFace) => assetFace.asset)
-  faces!: AssetFaceEntity[];
-
-  @Column({ nullable: true })
+  faces!: AssetFace[];
   stackId?: string | null;
-
-  @ManyToOne(() => StackEntity, { nullable: true, onDelete: 'SET NULL', onUpdate: 'CASCADE' })
-  @JoinColumn()
-  stack?: StackEntity | null;
-
-  @OneToOne(() => AssetJobStatusEntity, (jobStatus) => jobStatus.asset, { nullable: true })
+  stack?: Stack | null;
   jobStatus?: AssetJobStatusEntity;
-
-  @Index('IDX_assets_duplicateId')
-  @Column({ type: 'uuid', nullable: true })
   duplicateId!: string | null;
 }
 
@@ -187,7 +61,9 @@ export type AssetEntityPlaceholder = AssetEntity & {
 };
 
 export function withExif<O>(qb: SelectQueryBuilder<DB, 'assets', O>) {
-  return qb.leftJoin('exif', 'assets.id', 'exif.assetId').select((eb) => eb.fn.toJson(eb.table('exif')).as('exifInfo'));
+  return qb
+    .leftJoin('exif', 'assets.id', 'exif.assetId')
+    .select((eb) => eb.fn.toJson(eb.table('exif')).$castTo<Exif>().as('exifInfo'));
 }
 
 export function withExifInner<O>(qb: SelectQueryBuilder<DB, 'assets', O>) {
@@ -202,27 +78,32 @@ export function withSmartSearch<O>(qb: SelectQueryBuilder<DB, 'assets', O>) {
     .select((eb) => eb.fn.toJson(eb.table('smart_search')).as('smartSearch'));
 }
 
-export function withFaces(eb: ExpressionBuilder<DB, 'assets'>) {
-  return jsonArrayFrom(eb.selectFrom('asset_faces').selectAll().whereRef('asset_faces.assetId', '=', 'assets.id')).as(
-    'faces',
-  );
+export function withFaces(eb: ExpressionBuilder<DB, 'assets'>, withDeletedFace?: boolean) {
+  return jsonArrayFrom(
+    eb
+      .selectFrom('asset_faces')
+      .selectAll()
+      .whereRef('asset_faces.assetId', '=', 'assets.id')
+      .$if(!withDeletedFace, (qb) => qb.where('asset_faces.deletedAt', 'is', null)),
+  ).as('faces');
 }
 
 export function withFiles(eb: ExpressionBuilder<DB, 'assets'>, type?: AssetFileType) {
   return jsonArrayFrom(
     eb
       .selectFrom('asset_files')
-      .selectAll()
+      .selectAll('asset_files')
       .whereRef('asset_files.assetId', '=', 'assets.id')
-      .$if(!!type, (qb) => qb.where('type', '=', type!)),
+      .$if(!!type, (qb) => qb.where('asset_files.type', '=', type!)),
   ).as('files');
 }
 
-export function withFacesAndPeople(eb: ExpressionBuilder<DB, 'assets'>) {
+export function withFacesAndPeople(eb: ExpressionBuilder<DB, 'assets'>, withDeletedFace?: boolean) {
   return eb
     .selectFrom('asset_faces')
     .leftJoin('person', 'person.id', 'asset_faces.personId')
     .whereRef('asset_faces.assetId', '=', 'assets.id')
+    .$if(!withDeletedFace, (qb) => qb.where('asset_faces.deletedAt', 'is', null))
     .select((eb) =>
       eb
         .fn('jsonb_agg', [
@@ -251,6 +132,7 @@ export function hasPeople<O>(qb: SelectQueryBuilder<DB, 'assets', O>, personIds:
         .selectFrom('asset_faces')
         .select('assetId')
         .where('personId', '=', anyUuid(personIds!))
+        .where('deletedAt', 'is', null)
         .groupBy('assetId')
         .having((eb) => eb.fn.count('personId').distinct(), '=', personIds.length)
         .as('has_people'),
@@ -344,7 +226,7 @@ const joinDeduplicationPlugin = new DeduplicateJoinsPlugin();
 /** TODO: This should only be used for search-related queries, not as a general purpose query builder */
 export function searchAssetBuilder(kysely: Kysely<DB>, options: AssetSearchBuilderOptions) {
   options.isArchived ??= options.withArchived ? undefined : false;
-  options.withDeleted ||= !!(options.trashedAfter || options.trashedBefore);
+  options.withDeleted ||= !!(options.trashedAfter || options.trashedBefore || options.isOffline);
   return kysely
     .withPlugin(joinDeduplicationPlugin)
     .selectFrom('assets')
@@ -389,6 +271,11 @@ export function searchAssetBuilder(kysely: Kysely<DB>, options: AssetSearchBuild
         .innerJoin('exif', 'assets.id', 'exif.assetId')
         .where('exif.lensModel', options.lensModel === null ? 'is' : '=', options.lensModel!),
     )
+    .$if(options.rating !== undefined, (qb) =>
+      qb
+        .innerJoin('exif', 'assets.id', 'exif.assetId')
+        .where('exif.rating', options.rating === null ? 'is' : '=', options.rating!),
+    )
     .$if(!!options.checksum, (qb) => qb.where('assets.checksum', '=', options.checksum!))
     .$if(!!options.deviceAssetId, (qb) => qb.where('assets.deviceAssetId', '=', options.deviceAssetId!))
     .$if(!!options.deviceId, (qb) => qb.where('assets.deviceId', '=', options.deviceId!))
@@ -396,7 +283,9 @@ export function searchAssetBuilder(kysely: Kysely<DB>, options: AssetSearchBuild
     .$if(!!options.libraryId, (qb) => qb.where('assets.libraryId', '=', asUuid(options.libraryId!)))
     .$if(!!options.userIds, (qb) => qb.where('assets.ownerId', '=', anyUuid(options.userIds!)))
     .$if(!!options.encodedVideoPath, (qb) => qb.where('assets.encodedVideoPath', '=', options.encodedVideoPath!))
-    .$if(!!options.originalPath, (qb) => qb.where('assets.originalPath', '=', options.originalPath!))
+    .$if(!!options.originalPath, (qb) =>
+      qb.where(sql`f_unaccent(assets."originalPath")`, 'ilike', sql`'%' || f_unaccent(${options.originalPath}) || '%'`),
+    )
     .$if(!!options.originalFileName, (qb) =>
       qb.where(
         sql`f_unaccent(assets."originalFileName")`,

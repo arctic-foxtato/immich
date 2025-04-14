@@ -9,7 +9,7 @@
   let { title, children }: Props = $props();
 </script>
 
-<section class="min-w-screen flex min-h-dvh items-center justify-center relative">
+<section class="min-w-dvw flex min-h-dvh items-center justify-center relative">
   <div class="absolute -z-10 w-full h-full flex place-items-center place-content-center">
     <img
       src={immichLogo}
@@ -25,7 +25,7 @@
     <CardHeader class="mt-6">
       <VStack>
         <Logo variant="icon" size="giant" />
-        <Heading size="large" class="font-semibold" color="primary">{title}</Heading>
+        <Heading size="large" class="font-semibold" color="primary" tag="h1">{title}</Heading>
       </VStack>
     </CardHeader>
 

@@ -4,7 +4,6 @@ import {
   AssetResponseDto,
   AssetTypeEnum,
   getAssetInfo,
-  getConfig,
   getMyUser,
   LoginResponseDto,
   SharedLinkType,
@@ -44,8 +43,6 @@ const makeUploadDto = (options?: { omit: string }): Record<string, any> => {
 const locationAssetFilepath = `${testAssetDir}/metadata/gps-position/thompson-springs.jpg`;
 const ratingAssetFilepath = `${testAssetDir}/metadata/rating/mongolels.jpg`;
 const facesAssetFilepath = `${testAssetDir}/metadata/faces/portrait.jpg`;
-
-const getSystemConfig = (accessToken: string) => getConfig({ headers: asBearerAuth(accessToken) });
 
 const readTags = async (bytes: Buffer, filename: string) => {
   const filepath = join(tempDir, filename);
@@ -228,7 +225,7 @@ describe('/asset', () => {
     });
 
     it('should get the asset faces', async () => {
-      const config = await getSystemConfig(admin.accessToken);
+      const config = await utils.getSystemConfig(admin.accessToken);
       config.metadata.faces.import = true;
       await updateConfig({ systemConfigDto: config }, { headers: asBearerAuth(admin.accessToken) });
 
@@ -1144,7 +1141,7 @@ describe('/asset', () => {
             fNumber: 8,
             focalLength: 97,
             iso: 100,
-            lensModel: 'E PZ 18-105mm F4 G OSS',
+            lensModel: 'Sony E PZ 18-105mm F4 G OSS',
             fileSizeInByte: 25_001_984,
             dateTimeOriginal: '2016-09-27T10:51:44+00:00',
             orientation: '1',
@@ -1166,7 +1163,7 @@ describe('/asset', () => {
             fNumber: 22,
             focalLength: 25,
             iso: 100,
-            lensModel: 'E 25mm F2',
+            lensModel: 'Zeiss Batis 25mm F2',
             fileSizeInByte: 49_512_448,
             dateTimeOriginal: '2016-01-08T14:08:01+00:00',
             orientation: '1',
@@ -1237,7 +1234,7 @@ describe('/asset', () => {
             focalLength: 18.3,
             iso: 100,
             latitude: 36.613_24,
-            lensModel: 'GR LENS 18.3mm F2.8',
+            lensModel: '18.3mm F2.8',
             longitude: -121.897_85,
             make: 'RICOH IMAGING COMPANY, LTD.',
             model: 'RICOH GR III',
@@ -1260,6 +1257,7 @@ describe('/asset', () => {
 
       for (const { id, status } of assets) {
         expect(status).toBe(AssetMediaStatus.Created);
+        // longer timeout as the thumbnail generation from full-size raw files can take a while
         await utils.waitForWebsocketEvent({ event: 'assetUpload', id });
       }
 

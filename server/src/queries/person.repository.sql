@@ -23,7 +23,7 @@ REINDEX TABLE person
 -- PersonRepository.delete
 delete from "person"
 where
-  "person"."id" in ($1)
+  "person"."id" in $1
 
 -- PersonRepository.deleteFaces
 delete from "asset_faces"
@@ -42,6 +42,8 @@ select
 from
   "person"
   left join "asset_faces" on "asset_faces"."personId" = "person"."id"
+where
+  "asset_faces"."deletedAt" is null
 group by
   "person"."id"
 having
@@ -67,6 +69,7 @@ from
   "asset_faces"
 where
   "asset_faces"."assetId" = $1
+  and "asset_faces"."deletedAt" is null
 order by
   "asset_faces"."boundingBoxX1" asc
 
@@ -90,40 +93,73 @@ from
   "asset_faces"
 where
   "asset_faces"."id" = $1
+  and "asset_faces"."deletedAt" is null
 
--- PersonRepository.getFaceByIdWithAssets
+-- PersonRepository.getFaceForFacialRecognitionJob
 select
-  "asset_faces".*,
+  "asset_faces"."id",
+  "asset_faces"."personId",
+  "asset_faces"."sourceType",
   (
     select
       to_json(obj)
     from
       (
         select
-          "person".*
-        from
-          "person"
-        where
-          "person"."id" = "asset_faces"."personId"
-      ) as obj
-  ) as "person",
-  (
-    select
-      to_json(obj)
-    from
-      (
-        select
-          "assets".*
+          "assets"."ownerId",
+          "assets"."isArchived",
+          "assets"."fileCreatedAt"
         from
           "assets"
         where
           "assets"."id" = "asset_faces"."assetId"
       ) as obj
-  ) as "asset"
+  ) as "asset",
+  (
+    select
+      to_json(obj)
+    from
+      (
+        select
+          "face_search".*
+        from
+          "face_search"
+        where
+          "face_search"."faceId" = "asset_faces"."id"
+      ) as obj
+  ) as "faceSearch"
 from
   "asset_faces"
 where
   "asset_faces"."id" = $1
+  and "asset_faces"."deletedAt" is null
+
+-- PersonRepository.getDataForThumbnailGenerationJob
+select
+  "person"."ownerId",
+  "asset_faces"."boundingBoxX1" as "x1",
+  "asset_faces"."boundingBoxY1" as "y1",
+  "asset_faces"."boundingBoxX2" as "x2",
+  "asset_faces"."boundingBoxY2" as "y2",
+  "asset_faces"."imageWidth" as "oldWidth",
+  "asset_faces"."imageHeight" as "oldHeight",
+  "exif"."exifImageWidth",
+  "exif"."exifImageHeight",
+  "assets"."type",
+  "assets"."originalPath",
+  "asset_files"."path" as "previewPath"
+from
+  "person"
+  inner join "asset_faces" on "asset_faces"."id" = "person"."faceAssetId"
+  inner join "assets" on "asset_faces"."assetId" = "assets"."id"
+  inner join "exif" on "exif"."assetId" = "assets"."id"
+  inner join "asset_files" on "asset_files"."assetId" = "assets"."id"
+where
+  "person"."id" = $1
+  and "asset_faces"."deletedAt" is null
+  and "asset_files"."type" = $2
+  and "exif"."exifImageWidth" > $3
+  and "exif"."exifImageHeight" > $4
 
 -- PersonRepository.reassignFace
 update "asset_faces"
@@ -169,6 +205,8 @@ from
   and "asset_faces"."personId" = $1
   and "assets"."isArchived" = $2
   and "assets"."deletedAt" is null
+where
+  "asset_faces"."deletedAt" is null
 
 -- PersonRepository.getNumberOfPeople
 select
@@ -185,6 +223,7 @@ from
   and "assets"."isArchived" = $2
 where
   "person"."ownerId" = $3
+  and "asset_faces"."deletedAt" is null
 
 -- PersonRepository.refreshFaces
 with
@@ -235,6 +274,7 @@ from
 where
   "asset_faces"."assetId" in ($1)
   and "asset_faces"."personId" in ($2)
+  and "asset_faces"."deletedAt" is null
 
 -- PersonRepository.getRandomFace
 select
@@ -243,9 +283,22 @@ from
   "asset_faces"
 where
   "asset_faces"."personId" = $1
+  and "asset_faces"."deletedAt" is null
 
 -- PersonRepository.getLatestFaceDate
 select
   max("asset_job_status"."facesRecognizedAt")::text as "latestDate"
 from
   "asset_job_status"
+
+-- PersonRepository.deleteAssetFace
+delete from "asset_faces"
+where
+  "asset_faces"."id" = $1
+
+-- PersonRepository.softDeleteAssetFaces
+update "asset_faces"
+set
+  "deletedAt" = $1
+where
+  "asset_faces"."id" = $2

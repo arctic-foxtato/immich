@@ -5,7 +5,6 @@ import { randomUUID } from 'node:crypto';
 import { DB } from 'src/db';
 import { DummyValue, GenerateSql } from 'src/decorators';
 import { AssetEntity, searchAssetBuilder } from 'src/entities/asset.entity';
-import { GeodataPlacesEntity } from 'src/entities/geodata-places.entity';
 import { AssetStatus, AssetType } from 'src/enum';
 import { LoggingRepository } from 'src/repositories/logging.repository';
 import { anyUuid, asUuid } from 'src/utils/database';
@@ -109,6 +108,7 @@ export interface SearchExifOptions {
   model?: string | null;
   state?: string | null;
   description?: string | null;
+  rating?: number | null;
 }
 
 export interface SearchEmbeddingOptions {
@@ -163,6 +163,7 @@ export interface FaceEmbeddingSearch extends SearchEmbeddingOptions {
   hasPerson?: boolean;
   numResults: number;
   maxDistance: number;
+  minBirthDate?: Date | null;
 }
 
 export interface AssetDuplicateSearch {
@@ -318,6 +319,7 @@ export class SearchRepository {
           .where('assets.isVisible', '=', true)
           .where('assets.type', '=', type)
           .where('assets.id', '!=', asUuid(assetId))
+          .where('assets.stackId', 'is', null)
           .orderBy(sql`smart_search.embedding <=> ${embedding}`)
           .limit(64),
       )
@@ -337,7 +339,7 @@ export class SearchRepository {
       },
     ],
   })
-  searchFaces({ userIds, embedding, numResults, maxDistance, hasPerson }: FaceEmbeddingSearch) {
+  searchFaces({ userIds, embedding, numResults, maxDistance, hasPerson, minBirthDate }: FaceEmbeddingSearch) {
     if (!isValidInteger(numResults, { min: 1, max: 1000 })) {
       throw new Error(`Invalid value for 'numResults': ${numResults}`);
     }
@@ -353,9 +355,13 @@ export class SearchRepository {
           ])
           .innerJoin('assets', 'assets.id', 'asset_faces.assetId')
           .innerJoin('face_search', 'face_search.faceId', 'asset_faces.id')
+          .leftJoin('person', 'person.id', 'asset_faces.personId')
           .where('assets.ownerId', '=', anyUuid(userIds))
           .where('assets.deletedAt', 'is', null)
           .$if(!!hasPerson, (qb) => qb.where('asset_faces.personId', 'is not', null))
+          .$if(!!minBirthDate, (qb) =>
+            qb.where((eb) => eb.or([eb('person.birthDate', 'is', null), eb('person.birthDate', '<=', minBirthDate!)])),
+          )
           .orderBy(sql`face_search.embedding <=> ${embedding}`)
           .limit(numResults),
       )
@@ -366,7 +372,7 @@ export class SearchRepository {
   }
 
   @GenerateSql({ params: [DummyValue.STRING] })
-  searchPlaces(placeName: string): Promise<GeodataPlacesEntity[]> {
+  searchPlaces(placeName: string) {
     return this.db
       .selectFrom('geodata_places')
       .selectAll()
@@ -389,7 +395,7 @@ export class SearchRepository {
         `,
       )
       .limit(20)
-      .execute() as Promise<GeodataPlacesEntity[]>;
+      .execute();
   }
 
   @GenerateSql({ params: [[DummyValue.UUID]] })
@@ -403,7 +409,7 @@ export class SearchRepository {
           .where('assets.ownerId', '=', anyUuid(userIds))
           .where('assets.isVisible', '=', true)
           .where('assets.isArchived', '=', false)
-          .where('assets.type', '=', 'IMAGE')
+          .where('assets.type', '=', AssetType.IMAGE)
           .where('assets.deletedAt', 'is', null)
           .orderBy('city')
           .limit(1);
@@ -420,7 +426,7 @@ export class SearchRepository {
                 .where('assets.ownerId', '=', anyUuid(userIds))
                 .where('assets.isVisible', '=', true)
                 .where('assets.isArchived', '=', false)
-                .where('assets.type', '=', 'IMAGE')
+                .where('assets.type', '=', AssetType.IMAGE)
                 .where('assets.deletedAt', 'is', null)
                 .whereRef('exif.city', '>', 'cte.city')
                 .orderBy('city')

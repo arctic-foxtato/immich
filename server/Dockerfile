@@ -1,9 +1,10 @@
 # dev build
-FROM ghcr.io/immich-app/base-server-dev:20250211@sha256:6ae577a6518e1ccca973db16955f4d79b01cac3ae122759ccb1c17bf6c330ba9 AS dev
+FROM ghcr.io/immich-app/base-server-dev:202503251114@sha256:10e8973e8603c5729436d0f8ca32e7794375d9d1e428d65725eb03979b60c891 AS dev
 
 RUN apt-get install --no-install-recommends -yqq tini
 WORKDIR /usr/src/app
 COPY server/package.json server/package-lock.json ./
+COPY server/patches ./patches
 RUN npm ci && \
   # exiftool-vendored.pl, sharp-linux-x64 and sharp-linux-arm64 are the only ones we need
   # they're marked as optional dependencies, so we need to copy them manually after pruning
@@ -25,7 +26,7 @@ COPY --from=dev /usr/src/app/node_modules/@img ./node_modules/@img
 COPY --from=dev /usr/src/app/node_modules/exiftool-vendored.pl ./node_modules/exiftool-vendored.pl
 
 # web build
-FROM node:22.13.1-alpine3.20@sha256:c52e20859a92b3eccbd3a36c5e1a90adc20617d8d421d65e8a622e87b5dac963 AS web
+FROM node:22.14.0-alpine3.20@sha256:40be979442621049f40b1d51a26b55e281246b5de4e5f51a18da7beb6e17e3f9 AS web
 
 WORKDIR /usr/src/open-api/typescript-sdk
 COPY open-api/typescript-sdk/package*.json open-api/typescript-sdk/tsconfig*.json ./
@@ -42,7 +43,7 @@ RUN npm run build
 
 
 # prod build
-FROM ghcr.io/immich-app/base-server-prod:20250211@sha256:879cfe3d2afd4b7bdb211f694f99b6c0679a8bbd3e96964ad6c878f8471d63ea
+FROM ghcr.io/immich-app/base-server-prod:202503251114@sha256:783ee44f64e16301cd27eb2fad0b3b5b5ea4e56dd9b30adb96c97286f031ad26
 
 WORKDIR /usr/src/app
 ENV NODE_ENV=production \
@@ -56,7 +57,7 @@ COPY server/resources resources
 COPY server/package.json server/package-lock.json ./
 COPY server/start*.sh ./
 COPY "docker/scripts/get-cpus.sh" ./
-RUN npm link && npm install -g @immich/cli && npm cache clean --force
+RUN npm install -g @immich/cli && npm cache clean --force
 COPY LICENSE /licenses/LICENSE.txt
 COPY LICENSE /LICENSE
 ENV PATH="${PATH}:/usr/src/app/bin"

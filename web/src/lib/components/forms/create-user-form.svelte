@@ -30,7 +30,7 @@
   let quotaSize: string | undefined = $state();
   let isCreatingUser = $state(false);
 
-  let quotaSizeInBytes = $derived(quotaSize ? convertToBytes(Number(quotaSize), ByteUnit.GiB) : null);
+  let quotaSizeInBytes = $derived(quotaSize === null ? null : convertToBytes(Number(quotaSize), ByteUnit.GiB));
   let quotaSizeWarning = $derived(
     quotaSizeInBytes && userInteraction.serverInfo && quotaSizeInBytes > userInteraction.serverInfo.diskSizeRaw,
   );
@@ -91,7 +91,7 @@
 
       {#if $featureFlags.email}
         <Field label={$t('admin.send_welcome_email')}>
-          <Switch id="send-welcome-email" bind:checked={notify} class="flex justify-between text-sm" />
+          <Switch id="send-welcome-email" bind:checked={notify} class="text-sm" />
         </Field>
       {/if}
 
@@ -105,7 +105,7 @@
       </Field>
 
       <Field label={$t('admin.require_password_change_on_login')}>
-        <Switch id="require-password-change" bind:checked={shouldChangePassword} class="flex justify-between text-sm" />
+        <Switch id="require-password-change" bind:checked={shouldChangePassword} class="text-sm" />
       </Field>
 
       <Field label={$t('name')} required>
@@ -113,7 +113,7 @@
       </Field>
 
       <Field label={$t('admin.quota_size_gib')}>
-        <Input bind:value={quotaSize} type="number" min="0" />
+        <Input bind:value={quotaSize} type="number" placeholder={$t('unlimited')} min="0" />
         {#if quotaSizeWarning}
           <HelperText color="danger">{$t('errors.quota_higher_than_disk_size')}</HelperText>
         {/if}

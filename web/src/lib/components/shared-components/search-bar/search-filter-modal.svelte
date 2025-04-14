@@ -2,7 +2,7 @@
   import type { SearchLocationFilter } from './search-location-section.svelte';
   import type { SearchDisplayFilters } from './search-display-section.svelte';
   import type { SearchDateFilter } from './search-date-section.svelte';
-  import { MediaType } from '$lib/constants';
+  import { MediaType, QueryType, validQueryTypes } from '$lib/constants';
 
   export type SearchFilter = {
     query: string;
@@ -14,6 +14,7 @@
     date: SearchDateFilter;
     display: SearchDisplayFilters;
     mediaType: MediaType;
+    rating?: number;
   };
 </script>
 
@@ -26,6 +27,7 @@
   import SearchCameraSection, { type SearchCameraFilter } from './search-camera-section.svelte';
   import SearchDateSection from './search-date-section.svelte';
   import SearchMediaSection from './search-media-section.svelte';
+  import SearchRatingsSection from './search-ratings-section.svelte';
   import { parseUtcDate } from '$lib/utils/date-time';
   import SearchDisplaySection from './search-display-section.svelte';
   import SearchTextSection from './search-text-section.svelte';
@@ -34,6 +36,7 @@
   import { mdiTune } from '@mdi/js';
   import { generateId } from '$lib/utils/generate-id';
   import { SvelteSet } from 'svelte/reactivity';
+  import { preferences } from '$lib/stores/user.store';
 
   interface Props {
     searchQuery: MetadataSearchDto | SmartSearchDto;
@@ -52,9 +55,18 @@
     return value === null ? undefined : value;
   }
 
+  function storeQueryType(type: SearchFilter['queryType']) {
+    localStorage.setItem('searchQueryType', type);
+  }
+
+  function defaultQueryType(): QueryType {
+    const storedQueryType = localStorage.getItem('searchQueryType') as QueryType;
+    return validQueryTypes.has(storedQueryType) ? storedQueryType : QueryType.SMART;
+  }
+
   let filter: SearchFilter = $state({
     query: 'query' in searchQuery ? searchQuery.query : searchQuery.originalFileName || '',
-    queryType: 'query' in searchQuery ? 'smart' : 'metadata',
+    queryType: defaultQueryType(),
     personIds: new SvelteSet('personIds' in searchQuery ? searchQuery.personIds : []),
     tagIds: new SvelteSet('tagIds' in searchQuery ? searchQuery.tagIds : []),
     anyTags: searchQuery.anyTags,
@@ -82,12 +94,13 @@
         : searchQuery.type === AssetTypeEnum.Video
           ? MediaType.Video
           : MediaType.All,
+    rating: searchQuery.rating,
   });
 
   const resetForm = () => {
     filter = {
       query: '',
-      queryType: 'smart',
+      queryType: defaultQueryType(), // retain from localStorage or default
       personIds: new SvelteSet(),
       tagIds: new SvelteSet(),
       anyTags: false,
@@ -96,6 +109,7 @@
       date: {},
       display: {},
       mediaType: MediaType.All,
+      rating: undefined,
     };
   };
 
@@ -127,6 +141,7 @@
       anyTags: filter.anyTags || false,
       tagIds: filter.tagIds.size > 0 ? [...filter.tagIds] : undefined,
       type,
+      rating: filter.rating,
     };
 
     onSearch(payload);
@@ -139,8 +154,14 @@
 
   const onsubmit = (event: Event) => {
     event.preventDefault();
+    storeQueryType(filter.queryType);
     search();
   };
+
+  // Will be called whenever queryType changes, not just onsubmit.
+  $effect(() => {
+    storeQueryType(filter.queryType);
+  });
 </script>
 
 <FullScreenModal icon={mdiTune} width="extra-wide" title={$t('search_options')} {onClose}>
@@ -163,6 +184,11 @@
 
       <!-- DATE RANGE -->
       <SearchDateSection bind:filters={filter.date} />
+
+      <!-- RATING -->
+      {#if $preferences?.ratings.enabled}
+        <SearchRatingsSection bind:rating={filter.rating} />
+      {/if}
 
       <div class="grid md:grid-cols-2 gap-x-5 gap-y-10">
         <!-- MEDIA TYPE -->

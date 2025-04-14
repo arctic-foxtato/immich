@@ -112,6 +112,7 @@ with
       and "assets"."isVisible" = $3
       and "assets"."type" = $4
       and "assets"."id" != $5::uuid
+      and "assets"."stackId" is null
     order by
       smart_search.embedding <=> $6
     limit
@@ -135,6 +136,7 @@ with
       "asset_faces"
       inner join "assets" on "assets"."id" = "asset_faces"."assetId"
       inner join "face_search" on "face_search"."faceId" = "asset_faces"."id"
+      left join "person" on "person"."id" = "asset_faces"."personId"
     where
       "assets"."ownerId" = any ($2::uuid[])
       and "assets"."deletedAt" is null

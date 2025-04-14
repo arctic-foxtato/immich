@@ -25,7 +25,6 @@ import { AssetStatus, JobName, JobStatus, Permission, QueueName } from 'src/enum
 import { BaseService } from 'src/services/base.service';
 import { ISidecarWriteJob, JobItem, JobOf } from 'src/types';
 import { getAssetFiles, getMyPartnerIds, onAfterUnlink, onBeforeLink, onBeforeUnlink } from 'src/utils/asset.util';
-import { usePagination } from 'src/utils/pagination';
 
 @Injectable()
 export class AssetService extends BaseService {
@@ -38,12 +37,15 @@ export class AssetService extends BaseService {
     const userIds = [auth.user.id, ...partnerIds];
 
     const groups = await this.assetRepository.getByDayOfYear(userIds, dto);
-    return groups.map(({ yearsAgo, assets }) => ({
-      yearsAgo,
-      // TODO move this to clients
-      title: `${yearsAgo} year${yearsAgo > 1 ? 's' : ''} ago`,
-      assets: assets.map((asset) => mapAsset(asset, { auth })),
-    }));
+    return groups.map(({ year, assets }) => {
+      const yearsAgo = DateTime.utc().year - year;
+      return {
+        yearsAgo,
+        // TODO move this to clients
+        title: `${yearsAgo} year${yearsAgo > 1 ? 's' : ''} ago`,
+        assets: assets.map((asset) => mapAsset(asset as unknown as AssetEntity, { auth })),
+      };
+    });
   }
 
   async getStatistics(auth: AuthDto, dto: AssetStatsDto) {
@@ -132,8 +134,11 @@ export class AssetService extends BaseService {
     const { ids, dateTimeOriginal, latitude, longitude, ...options } = dto;
     await this.requireAccess({ auth, permission: Permission.ASSET_UPDATE, ids });
 
-    for (const id of ids) {
-      await this.updateMetadata({ id, dateTimeOriginal, latitude, longitude });
+    if (dateTimeOriginal !== undefined || latitude !== undefined || longitude !== undefined) {
+      await this.assetRepository.updateAllExif(ids, { dateTimeOriginal, latitude, longitude });
+      await this.jobRepository.queueAll(
+        ids.map((id) => ({ name: JobName.SIDECAR_WRITE, data: { id, dateTimeOriginal, latitude, longitude } })),
+      );
     }
 
     if (
@@ -153,21 +158,29 @@ export class AssetService extends BaseService {
     const trashedBefore = DateTime.now()
       .minus(Duration.fromObject({ days: trashedDays }))
       .toJSDate();
-    const assetPagination = usePagination(JOBS_ASSET_PAGINATION_SIZE, (pagination) =>
-      this.assetRepository.getAll(pagination, { trashedBefore }),
-    );
 
-    for await (const assets of assetPagination) {
-      await this.jobRepository.queueAll(
-        assets.map((asset) => ({
-          name: JobName.ASSET_DELETION,
-          data: {
-            id: asset.id,
-            deleteOnDisk: !asset.isOffline,
-          },
-        })),
-      );
+    let chunk: Array<{ id: string; isOffline: boolean }> = [];
+    const queueChunk = async () => {
+      if (chunk.length > 0) {
+        await this.jobRepository.queueAll(
+          chunk.map(({ id, isOffline }) => ({
+            name: JobName.ASSET_DELETION,
+            data: { id, deleteOnDisk: !isOffline },
+          })),
+        );
+        chunk = [];
+      }
+    };
+
+    const assets = this.assetRepository.streamDeletedAssets(trashedBefore);
+    for await (const asset of assets) {
+      chunk.push(asset);
+      if (chunk.length >= JOBS_ASSET_PAGINATION_SIZE) {
+        await queueChunk();
+      }
     }
+
+    await queueChunk();
 
     return JobStatus.SUCCESS;
   }
@@ -190,7 +203,7 @@ export class AssetService extends BaseService {
 
     // Replace the parent of the stack children with a new asset
     if (asset.stack?.primaryAssetId === id) {
-      const stackAssetIds = asset.stack.assets.map((a) => a.id);
+      const stackAssetIds = asset.stack?.assets.map((a) => a.id) ?? [];
       if (stackAssetIds.length > 2) {
         const newPrimaryAssetId = stackAssetIds.find((a) => a !== id)!;
         await this.stackRepository.update(asset.stack.id, {
@@ -220,8 +233,8 @@ export class AssetService extends BaseService {
       }
     }
 
-    const { thumbnailFile, previewFile } = getAssetFiles(asset.files);
-    const files = [thumbnailFile?.path, previewFile?.path, asset.encodedVideoPath];
+    const { fullsizeFile, previewFile, thumbnailFile } = getAssetFiles(asset.files);
+    const files = [thumbnailFile?.path, previewFile?.path, fullsizeFile?.path, asset.encodedVideoPath];
 
     if (deleteOnDisk) {
       files.push(asset.sidecarPath, asset.originalPath);

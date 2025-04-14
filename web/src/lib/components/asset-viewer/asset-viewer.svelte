@@ -1,6 +1,6 @@
 <script lang="ts">
   import { focusTrap } from '$lib/actions/focus-trap';
-  import type { Action, OnAction } from '$lib/components/asset-viewer/actions/action';
+  import type { Action, OnAction, PreAction } from '$lib/components/asset-viewer/actions/action';
   import MotionPhotoAction from '$lib/components/asset-viewer/actions/motion-photo-action.svelte';
   import NextAssetAction from '$lib/components/asset-viewer/actions/next-asset-action.svelte';
   import PreviousAssetAction from '$lib/components/asset-viewer/actions/previous-asset-action.svelte';
@@ -58,12 +58,14 @@
     isShared?: boolean;
     album?: AlbumResponseDto | null;
     person?: PersonResponseDto | null;
+    preAction?: PreAction | undefined;
     onAction?: OnAction | undefined;
     reactions?: ActivityResponseDto[];
+    showCloseButton?: boolean;
     onClose: (dto: { asset: AssetResponseDto }) => void;
     onNext: () => Promise<HasAsset>;
     onPrevious: () => Promise<HasAsset>;
-    onRandom: () => Promise<AssetResponseDto | null>;
+    onRandom: () => Promise<AssetResponseDto | undefined>;
     copyImage?: () => Promise<void>;
   }
 
@@ -75,8 +77,10 @@
     isShared = false,
     album = null,
     person = null,
+    preAction = undefined,
     onAction = undefined,
     reactions = $bindable([]),
+    showCloseButton,
     onClose,
     onNext,
     onPrevious,
@@ -366,7 +370,9 @@
   const handleStackedAssetMouseEvent = (isMouseOver: boolean, asset: AssetResponseDto) => {
     previewStackedAsset = isMouseOver ? asset : undefined;
   };
-
+  const handlePreAction = (action: Action) => {
+    preAction?.(action);
+  };
   const handleAction = async (action: Action) => {
     switch (action.type) {
       case AssetAction.ADD_TO_ALBUM: {
@@ -427,10 +433,12 @@
         {album}
         {person}
         {stack}
+        {showCloseButton}
         showDetailButton={enableDetailPanel}
         showSlideshow={true}
         onZoomImage={zoomToggle}
         onCopyImage={copyImage}
+        preAction={handlePreAction}
         onAction={handleAction}
         onRunJob={handleRunJob}
         onPlaySlideshow={() => ($slideshowState = SlideshowState.PlaySlideshow)}
@@ -477,7 +485,6 @@
             {preloadAssets}
             onPreviousAsset={() => navigateAsset('previous')}
             onNextAsset={() => navigateAsset('next')}
-            onClose={closeViewer}
             haveFadeTransition={false}
             {sharedLink}
           />
@@ -522,7 +529,6 @@
               {preloadAssets}
               onPreviousAsset={() => navigateAsset('previous')}
               onNextAsset={() => navigateAsset('next')}
-              onClose={closeViewer}
               {sharedLink}
               haveFadeTransition={$slideshowState === SlideshowState.None || $slideshowTransition}
             />
@@ -589,29 +595,28 @@
       id="stack-slideshow"
       class="z-[1002] flex place-item-center place-content-center absolute bottom-0 w-full col-span-4 col-start-1 overflow-x-auto horizontal-scrollbar"
     >
-      <div class="relative w-full whitespace-nowrap transition-all">
+      <div class="relative w-full">
         {#each stackedAssets as stackedAsset (stackedAsset.id)}
           <div
-            class="{stackedAsset.id == asset.id
-              ? '-translate-y-[1px]'
-              : '-translate-y-0'} inline-block px-1 transition-transform"
+            class={['inline-block px-1 relative transition-all pb-2']}
+            style:bottom={stackedAsset.id === asset.id ? '0' : '-10px'}
           >
             <Thumbnail
-              class="{stackedAsset.id == asset.id
-                ? 'bg-transparent border-2 border-white'
-                : 'bg-gray-700/40'} inline-block hover:bg-transparent"
+              imageClass={{ 'border-2 border-white': stackedAsset.id === asset.id }}
+              brokenAssetClass="text-xs"
+              dimmed={stackedAsset.id !== asset.id}
               asset={stackedAsset}
               onClick={(stackedAsset) => {
                 asset = stackedAsset;
               }}
               onMouseEvent={({ isMouseOver }) => handleStackedAssetMouseEvent(isMouseOver, stackedAsset)}
-              disableMouseOver
               readonly
-              thumbnailSize={stackedAsset.id == asset.id ? 65 : 60}
+              thumbnailSize={stackedAsset.id === asset.id ? 65 : 60}
               showStackedIcon={false}
+              disableLinkMouseOver
             />
 
-            {#if stackedAsset.id == asset.id}
+            {#if stackedAsset.id === asset.id}
               <div class="w-full flex place-items-center place-content-center">
                 <div class="w-2 h-2 bg-white rounded-full flex mt-[2px]"></div>
               </div>

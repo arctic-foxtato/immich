@@ -1,6 +1,6 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
-  import type { OnAction } from '$lib/components/asset-viewer/actions/action';
+  import type { OnAction, PreAction } from '$lib/components/asset-viewer/actions/action';
   import AddToAlbumAction from '$lib/components/asset-viewer/actions/add-to-album-action.svelte';
   import ArchiveAction from '$lib/components/asset-viewer/actions/archive-action.svelte';
   import CloseAction from '$lib/components/asset-viewer/actions/close-action.svelte';
@@ -54,10 +54,12 @@
     album?: AlbumResponseDto | null;
     person?: PersonResponseDto | null;
     stack?: StackResponseDto | null;
+    showCloseButton?: boolean;
     showDetailButton: boolean;
     showSlideshow?: boolean;
     onZoomImage: () => void;
     onCopyImage?: () => Promise<void>;
+    preAction: PreAction;
     onAction: OnAction;
     onRunJob: (name: AssetJobName) => void;
     onPlaySlideshow: () => void;
@@ -72,10 +74,12 @@
     album = null,
     person = null,
     stack = null,
+    showCloseButton = true,
     showDetailButton,
     showSlideshow = false,
     onZoomImage,
     onCopyImage,
+    preAction,
     onAction,
     onRunJob,
     onPlaySlideshow,
@@ -87,6 +91,7 @@
   const sharedLink = getSharedLink();
   let isOwner = $derived($user && asset.ownerId === $user?.id);
   let showDownloadButton = $derived(sharedLink ? sharedLink.allowDownload : !asset.isOffline);
+
   // $: showEditorButton =
   //   isOwner &&
   //   asset.type === AssetTypeEnum.Image &&
@@ -102,7 +107,9 @@
   class="z-[1001] flex h-16 place-items-center justify-between bg-gradient-to-b from-black/40 px-3 transition-transform duration-200"
 >
   <div class="text-white">
-    <CloseAction {onClose} />
+    {#if showCloseButton}
+      <CloseAction {onClose} />
+    {/if}
   </div>
   <div class="flex gap-2 overflow-x-auto text-white" data-testid="asset-viewer-navbar-actions">
     {#if !asset.isTrashed && $user}
@@ -149,7 +156,7 @@
     {/if} -->
 
     {#if isOwner}
-      <DeleteAction {asset} {onAction} />
+      <DeleteAction {asset} {onAction} {preAction} />
 
       <ButtonContextMenu direction="left" align="top-right" color="opaque" title={$t('more')} icon={mdiDotsVertical}>
         {#if showSlideshow}
@@ -179,7 +186,7 @@
           {#if asset.type === AssetTypeEnum.Image}
             <SetProfilePictureAction {asset} />
           {/if}
-          <ArchiveAction {asset} {onAction} />
+          <ArchiveAction {asset} {onAction} {preAction} />
           <MenuOption
             icon={mdiUpload}
             onClick={() => openFileUploadDialog({ multiple: false, assetId: asset.id })}
@@ -188,7 +195,7 @@
           {#if !asset.isArchived && !asset.isTrashed}
             <MenuOption
               icon={mdiImageSearch}
-              onClick={() => goto(`${AppRoute.PHOTOS}?at=${asset.id}`)}
+              onClick={() => goto(`${AppRoute.PHOTOS}?at=${stack?.primaryAssetId ?? asset.id}`)}
               text={$t('view_in_timeline')}
             />
           {/if}

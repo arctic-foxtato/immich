@@ -22,7 +22,6 @@ import 'package:immich_mobile/entities/album.entity.dart';
 import 'package:immich_mobile/entities/asset.entity.dart';
 import 'package:immich_mobile/providers/asset.provider.dart';
 import 'package:immich_mobile/providers/user.provider.dart';
-import 'package:immich_mobile/widgets/common/immich_loading_indicator.dart';
 import 'package:immich_mobile/widgets/common/immich_toast.dart';
 import 'package:immich_mobile/utils/immich_loading_overlay.dart';
 import 'package:immich_mobile/utils/selection_handlers.dart';
@@ -59,7 +58,7 @@ class MultiselectGrid extends HookConsumerWidget {
   final bool editEnabled;
   final Widget? emptyIndicator;
   Widget buildDefaultLoadingIndicator() =>
-      const Center(child: ImmichLoadingIndicator());
+      const Center(child: CircularProgressIndicator());
 
   Widget buildEmptyIndicator() =>
       emptyIndicator ?? Center(child: const Text("no_assets_to_show").tr());
@@ -200,24 +199,26 @@ class MultiselectGrid extends HookConsumerWidget {
       }
     }
 
-    void onDeleteLocal(bool onlyBackedUp) async {
+    void onDeleteLocal(bool isMergedAsset) async {
       processing.value = true;
       try {
-        // Select only the local assets from the selection
-        final localIds = selection.value.where((a) => a.isLocal).toList();
+        final localAssets = selection.value.where((a) => a.isLocal).toList();
 
-        // Delete only the backed-up assets if 'onlyBackedUp' is true
+        final toDelete = isMergedAsset
+            ? localAssets.where((e) => e.storage == AssetState.merged)
+            : localAssets;
+
+        if (toDelete.isEmpty) {
+          return;
+        }
+
         final isDeleted = await ref
             .read(assetProvider.notifier)
-            .deleteLocalOnlyAssets(localIds, onlyBackedUp: onlyBackedUp);
+            .deleteLocalAssets(toDelete.toList());
 
         if (isDeleted) {
-          // Show a toast with the correct number of deleted assets
-          final deletedCount = localIds
-              .where(
-                (e) => !onlyBackedUp || e.isRemote,
-              ) // Only count backed-up assets
-              .length;
+          final deletedCount =
+              localAssets.where((e) => !isMergedAsset || e.isRemote).length;
 
           ImmichToast.show(
             context: context,
@@ -226,7 +227,6 @@ class MultiselectGrid extends HookConsumerWidget {
             gravity: ToastGravity.BOTTOM,
           );
 
-          // Reset the selection
           selectionEnabledHook.value = false;
         }
       } finally {
@@ -234,7 +234,7 @@ class MultiselectGrid extends HookConsumerWidget {
       }
     }
 
-    void onDeleteRemote([bool force = false]) async {
+    void onDeleteRemote([bool shouldDeletePermanently = false]) async {
       processing.value = true;
       try {
         final toDelete = ownedRemoteSelection(
@@ -242,13 +242,15 @@ class MultiselectGrid extends HookConsumerWidget {
           ownerErrorMessage: 'home_page_delete_err_partner'.tr(),
         ).toList();
 
-        final isDeleted = await ref
-            .read(assetProvider.notifier)
-            .deleteRemoteOnlyAssets(toDelete, force: force);
+        final isDeleted =
+            await ref.read(assetProvider.notifier).deleteRemoteAssets(
+                  toDelete,
+                  shouldDeletePermanently: shouldDeletePermanently,
+                );
         if (isDeleted) {
           ImmichToast.show(
             context: context,
-            msg: force
+            msg: shouldDeletePermanently
                 ? 'assets_deleted_permanently_from_server'
                     .tr(args: ["${toDelete.length}"])
                 : 'assets_trashed_from_server'.tr(args: ["${toDelete.length}"]),
