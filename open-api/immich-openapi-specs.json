@@ -10167,6 +10167,9 @@
       },
       "MetadataSearchDto": {
         "properties": {
+          "anyTags": {
+            "type": "boolean"
+          },
           "checksum": {
             "type": "string"
           },
@@ -10867,6 +10870,9 @@
       },
       "RandomSearchDto": {
         "properties": {
+          "anyTags": {
+            "type": "boolean"
+          },
           "city": {
             "nullable": true,
             "type": "string"
@@ -11815,6 +11821,9 @@
       },
       "SmartSearchDto": {
         "properties": {
+          "anyTags": {
+            "type": "boolean"
+          },
           "city": {
             "nullable": true,
             "type": "string"
